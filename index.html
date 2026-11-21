@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Harf ve Sayı Oyunları</title>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fbf7ee;--card:#fff;--ink:#1d2b3a;--mute:#5d6b7a;--blue:#2f6fd0;--red:#d6453d;--ok:#2e9e6b;--line:#e3dccb;--sun:#ffd25e;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#16202b;--card:#1f2d3b;--ink:#f1ede2;--mute:#a4b0bd;--blue:#7fb0ff;--red:#ff8a80;--ok:#5fd09a;--line:#34465a;--sun:#e8b93c}}
+:root[data-theme="dark"]{--bg:#16202b;--card:#1f2d3b;--ink:#f1ede2;--mute:#a4b0bd;--blue:#7fb0ff;--red:#ff8a80;--ok:#5fd09a;--line:#34465a;--sun:#e8b93c}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Lexend',system-ui,sans-serif;line-height:1.5;display:flex;justify-content:center}
+main{width:100%;max-width:480px;padding:16px}
+h1{font-size:1.25rem;margin:4px 0 12px}
+.tabs,.modes{display:flex;gap:8px;margin-bottom:14px}
+.tabs button,.modes button{flex:1;padding:12px;border:2px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
+.tabs button[aria-selected=true],.modes button[aria-selected=true]{border-color:var(--blue);background:var(--blue);color:#fff}
+.modes button{font-weight:400;font-size:.9rem;padding:8px}
+.panel{background:var(--card);border-radius:20px;padding:20px 16px;border:1px solid var(--line);text-align:center}
+.pic{font-size:5rem;line-height:1.1}
+.ask{color:var(--mute);margin:4px 0 14px;font-size:.95rem}
+.row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px 0}
+.slot,.tile{width:60px;height:68px;border-radius:14px;font:inherit;font-size:2rem;font-weight:600;cursor:pointer}
+.slot{border:3px dashed var(--line);background:transparent}
+.slot.f{border-style:solid}
+.tile{border:3px solid currentColor;background:var(--card)}
+.tile.v,.slot.v{color:var(--red)}.tile.c,.slot.c{color:var(--blue)}
+.tile:disabled{opacity:.2;cursor:default}
+.msg{min-height:1.8em;font-weight:600;margin:10px 0}
+.msg.ok{color:var(--ok)}
+.go{padding:12px 22px;border:0;border-radius:14px;background:var(--sun);color:#1d2b3a;font:inherit;font-weight:600;font-size:1rem;cursor:pointer}
+.frame{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-width:320px;margin:12px auto}
+.cell{aspect-ratio:1;border:3px solid var(--line);border-radius:12px;background:transparent;padding:0}
+.cell.on{background:var(--red);border-color:var(--red);border-radius:50%}
+.num{font-size:4.5rem;font-weight:600;line-height:1.1;color:var(--blue)}
+.opts{display:flex;gap:10px;justify-content:center;margin:10px 0}
+.opt{width:80px;height:80px;border-radius:18px;border:3px solid var(--blue);background:var(--card);color:var(--blue);font:inherit;font-size:2.2rem;font-weight:600;cursor:pointer}
+button:focus-visible{outline:4px solid var(--sun);outline-offset:2px}
+.wd{display:flex;justify-content:center;gap:4px;margin:12px 0}.wd span{width:44px;height:56px;display:flex;align-items:center;justify-content:center;font-size:1.7rem;font-weight:600;border-radius:10px;border:3px solid var(--line)}.wd .cur{border-color:var(--sun);background:var(--sun);color:#1d2b3a}.wd .s{color:var(--blue);border-color:var(--blue)}.wd .sh{color:var(--red);border-color:var(--red)}.opt.r{color:var(--red);border-color:var(--red)}
+.hide{display:none}
+@media (prefers-reduced-motion:no-preference){.pop{animation:pop .3s}@keyframes pop{50%{transform:scale(1.08)}}}
+</style>
+</head>
+<body>
+<main>
+<h1>Dokun, yerleştir, öğren</h1>
+<div class="tabs" role="tablist">
+<button role="tab" id="t1" aria-selected="true">Harfler</button>
+<button role="tab" id="t2" aria-selected="false">Sayılar</button>
+<button role="tab" id="t3" aria-selected="false">S – Ş</button>
+</div>
+
+<section id="p1" class="panel">
+<div class="pic" id="pic"></div>
+<div class="ask">Harflere dokunarak kelimeyi oluştur.</div>
+<div class="row" id="slots"></div>
+<div class="row" id="tiles"></div>
+<div class="msg" id="m1" aria-live="polite"></div>
+<button class="go hide" id="n1">Sıradaki kelime</button>
+</section>
+
+<section id="p2" class="panel hide">
+<div class="modes">
+<button id="m_a" aria-selected="true">Say ve seç</button>
+<button id="m_b" aria-selected="false">Çerçeveyi doldur</button>
+</div>
+<div id="ask2" class="ask"></div>
+<div id="num" class="num hide"></div>
+<div class="frame" id="frame"></div>
+<div class="opts" id="opts"></div>
+<button class="go hide" id="chk">Kontrol et</button>
+<div class="msg" id="m2" aria-live="polite"></div>
+<button class="go hide" id="n2">Sıradaki</button>
+</section>
+
+<section id="p3" class="panel hide">
+<div class="pic" id="pic3"></div>
+<div class="ask">Boş kutuya hangi harf gelir? S mi, Ş mi?</div>
+<div class="wd" id="wd"></div>
+<div class="opts"><button class="opt" id="bs">S</button><button class="opt r" id="bsh">Ş</button></div>
+<div class="ask">İpucu: Ş harfinin altında kuyruk var.</div>
+<div class="msg" id="m3" aria-live="polite"></div>
+<button class="go hide" id="n3">Sıradaki kelime</button>
+</section>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const VOW="AEIİOÖUÜ";
+const WORDS=[["🥯","SİMİT"],["🧺","SEPET"],["🦁","ASLAN"],["🎂","PASTA"],["⏰","SAAT"],["🍬","ŞEKER"],["🧢","ŞAPKA"],["🍼","ŞİŞE"],["🥄","KAŞIK"],["🐰","TAVŞAN"]];
+let wi=0,slots=[],tiles=[];
+
+/* tabs */
+function tab(n){[1,2,3].forEach(i=>{$("p"+i).classList.toggle("hide",n!==i);$("t"+i).setAttribute("aria-selected",n===i)})}
+$("t1").onclick=()=>tab(1);$("t2").onclick=()=>tab(2);$("t3").onclick=()=>tab(3);
+
+/* words */
+function shuffle(a){let b;do{b=a.slice().sort(()=>Math.random()-.5)}while(a.length>1&&b.join("")===a.join(""));return b}
+function loadWord(){
+  const [pic,w]=WORDS[wi];
+  $("pic").textContent=pic;
+  slots=Array(w.length).fill(null);
+  tiles=shuffle(w.split("")).map((ch,i)=>({ch,i,used:false}));
+  $("m1").textContent="";$("m1").className="msg";$("n1").classList.add("hide");
+  drawWord();
+}
+function drawWord(){
+  $("slots").innerHTML="";$("tiles").innerHTML="";
+  slots.forEach((t,k)=>{
+    const b=document.createElement("button");
+    b.className="slot"+(t?" f "+(VOW.includes(t.ch)?"v":"c"):"");
+    b.textContent=t?t.ch:"";
+    b.setAttribute("aria-label",t?"Harfi geri al "+t.ch:"Boş kutu");
+    b.onclick=()=>{if(t){t.used=false;slots[k]=null;$("m1").textContent="";drawWord()}};
+    $("slots").appendChild(b);
+  });
+  tiles.forEach(t=>{
+    const b=document.createElement("button");
+    b.className="tile "+(VOW.includes(t.ch)?"v":"c");
+    b.textContent=t.ch;b.disabled=t.used;
+    b.onclick=()=>{
+      const k=slots.indexOf(null);if(k<0)return;
+      t.used=true;slots[k]=t;drawWord();
+      if(slots.indexOf(null)<0)checkWord();
+    };
+    $("tiles").appendChild(b);
+  });
+}
+function checkWord(){
+  const ok=slots.map(t=>t.ch).join("")===WORDS[wi][1];
+  const m=$("m1");
+  if(ok){m.textContent="Aferin! "+WORDS[wi][1]+" kelimesini buldun.";m.className="msg ok pop";$("n1").classList.remove("hide")}
+  else{m.textContent="Neredeyse! Harfleri yeniden dene.";
+    setTimeout(()=>{slots.fill(null);tiles.forEach(t=>t.used=false);m.textContent="";drawWord()},1300)}
+}
+$("n1").onclick=()=>{wi=(wi+1)%WORDS.length;loadWord()};
+
+/* numbers */
+let mode="a",target=0,fill=[];
+function rnd(a,b){return a+Math.floor(Math.random()*(b-a+1))}
+function frame(n,tappable){
+  const f=$("frame");f.innerHTML="";
+  for(let i=0;i<10;i++){
+    const c=document.createElement("button");
+    c.className="cell"+((tappable?fill[i]:i<n)?" on":"");
+    c.disabled=!tappable;c.setAttribute("aria-label","Kutu "+(i+1));
+    if(tappable)c.onclick=()=>{fill[i]=!fill[i];c.classList.toggle("on",fill[i])};
+    f.appendChild(c);
+  }
+}
+function loadNum(){
+  $("m2").textContent="";$("m2").className="msg";$("n2").classList.add("hide");
+  target=rnd(1,10);fill=Array(10).fill(false);
+  if(mode==="a"){
+    $("ask2").textContent="Kaç tane var? Doğru rakama dokun.";
+    $("num").classList.add("hide");$("chk").classList.add("hide");$("opts").classList.remove("hide");
+    frame(target,false);
+    const s=new Set([target]);while(s.size<3){const x=rnd(Math.max(1,target-2),Math.min(10,target+2)+1);if(x<=10)s.add(x)}
+    $("opts").innerHTML="";
+    [...s].sort(()=>Math.random()-.5).forEach(v=>{
+      const b=document.createElement("button");b.className="opt";b.textContent=v;
+      b.onclick=()=>{
+        if(v===target){$("m2").textContent="Aferin! "+target+" tane.";$("m2").className="msg ok pop";$("n2").classList.remove("hide")}
+        else{$("m2").textContent="Bir daha say, parmakla dokunabilirsin."}
+      };
+      $("opts").appendChild(b);
+    });
+  }else{
+    $("ask2").textContent="Bu sayı kadar daire koy.";
+    $("num").textContent=target;$("num").classList.remove("hide");
+    $("opts").classList.add("hide");$("chk").classList.remove("hide");
+    frame(0,true);
+  }
+}
+$("chk").onclick=()=>{
+  const n=fill.filter(Boolean).length;
+  if(n===target){$("m2").textContent="Aferin! "+target+" daire koydun. 10’a "+(10-target)+" eksik.";$("m2").className="msg ok pop";$("n2").classList.remove("hide");$("chk").classList.add("hide")}
+  else{$("m2").textContent=n>target?"Biraz fazla oldu. Bir daireye dokunup kaldır.":"Biraz eksik kaldı. Birkaç daire daha ekle."}
+};
+$("n2").onclick=loadNum;
+function setMode(m){mode=m;$("m_a").setAttribute("aria-selected",m==="a");$("m_b").setAttribute("aria-selected",m==="b");loadNum()}
+$("m_a").onclick=()=>setMode("a");$("m_b").onclick=()=>setMode("b");
+
+/* S - Ş */
+const SW=[["🥯","SİMİT"],["🍬","ŞEKER"],["🛣️","ŞOSE"],["🍣","SUŞİ"],["🧺","SEPET"],["🧢","ŞAPKA"],["🦁","ASLAN"],["🐰","TAVŞAN"],["🍼","ŞİŞE"],["🥄","KAŞIK"],["🎂","PASTA"]];
+let si=0,pos=[],bi=0;
+function loadSS(){
+  const w=SW[si][1];$("pic3").textContent=SW[si][0];
+  pos=[...w].map((c,i)=>"SŞ".includes(c)?i:-1).filter(i=>i>=0);bi=0;
+  $("m3").textContent="";$("m3").className="msg";$("n3").classList.add("hide");$("bs").disabled=$("bsh").disabled=false;
+  drawSS();
+}
+function drawSS(){
+  const w=SW[si][1];$("wd").innerHTML="";
+  [...w].forEach((c,i)=>{
+    const s=document.createElement("span"),k=pos.indexOf(i);
+    if(k<0)s.textContent=c;
+    else if(k<bi){s.textContent=c;s.className=c==="S"?"s":"sh"}
+    else{s.textContent="";if(k===bi)s.className="cur"}
+    $("wd").appendChild(s);
+  });
+}
+function pick(l){
+  const w=SW[si][1];
+  if(l===w[pos[bi]]){
+    bi++;drawSS();
+    if(bi===pos.length){$("m3").textContent="Aferin! "+w+" kelimesini tamamladın.";$("m3").className="msg ok pop";$("n3").classList.remove("hide");$("bs").disabled=$("bsh").disabled=true}
+    else{$("m3").textContent=""}
+  }else{$("m3").textContent="Bir daha dene. Kelimeyi yüksek sesle söyle."}
+}
+$("bs").onclick=()=>pick("S");$("bsh").onclick=()=>pick("Ş");
+$("n3").onclick=()=>{si=(si+1)%SW.length;loadSS()};
+
+loadWord();loadNum();loadSS();
+</script>
+</body>
+</html>
